@@ -1,19 +1,15 @@
 import streamlit as st
 
-st.set_page_config(
-    page_title="Meu Painel Financeiro",
-    page_icon="💵",
-    layout="wide"
-)
+pages = {
+    "Dashboard": [
+        st.Page("pages/1_view_db.py", title="Acessar Contas"),
+        st.Page("pages/3_manage_banks.py", title="Gerenciar Contas"),
+        st.Page("pages/4_quick_actions.py", title="Registrar Movimentações"),
+    ],
+    "Features": [
+        st.Page("pages/2_simulate_investments.py", title="Simulador de Investimentos"),
+    ],
+}
 
-st.title("💵 Meu Painel Financeiro")
-
-st.markdown("""
-Bem-vindo ao **Painel Financeiro Pessoal**!  
-Aqui você pode:
-- Gerenciar suas **contas bancárias e investimentos**
-- Acompanhar seus **saldos e distribuição**
-- Simular **rendimentos futuros** com base no CDI atual
-""")
-
-st.info("👉 Use o menu lateral para navegar entre as páginas.")
+pg = st.navigation(pages)
+pg.run()
