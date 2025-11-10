@@ -1,5 +1,8 @@
 ID,BancoID,Tipo,Nome,Data,Operação,Valor,Categoria,Descrição
-6,5,Banco,rawn,2025-11-02 00:00:00,Depósito,7.0,Rendimento,
-7,6,Banco,teste de remover banco,2025-11-02 00:00:00,Depósito,7845.0,Transferência recebida,teste
-8,6,Banco,teste de remover banco,2025-11-08 00:00:00,Retirada,7000.0,Saúde,teste
-11,3,Investimento,Caixinha CDI,2025-11-01 00:00:00,Depósito,25.0,Rendimento,veremos
+11,3,Investimento,Caixinha CDI,2025-11-01,Depósito,25.0,Rendimento,veremos
+12,1,Banco,Mercado Pago,2025-11-10,Depósito,68.0,Rendimento,Verificando o rendimento
+13,5,Banco,aaaaa,2025-11-09,Depósito,7.0,Transferência recebida,teste
+14,2,Banco,Caixa,2025-11-10,Depósito,18.0,Salário,teste
+15,1,Banco,Mercado Pago,2025-11-09,Depósito,1000.0,Salário,hehe
+17,1,Banco,Mercado Pago,2025-11-08,Retirada,20.0,Lazer,jogo
+18,2,Banco,Caixa,2025-12-10,Depósito,110.0,Transferência recebida,internet

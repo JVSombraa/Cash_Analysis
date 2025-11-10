@@ -147,20 +147,26 @@ with tab3:
                 if c1.button("💾 Salvar alterações", key=f"atualizar_{row['ID']}"):
                     df_full = load_data()  # recarrega DB atual
                     # localizar por ID no db (ID é estável)
-                    mask = df_full["ID"].astype(int) == int(row["ID"])
-                    if not mask.any():
+                    mask_id = df_full["ID"].astype(int) == int(row["ID"])
+                    if not mask_id.any():
                         st.error("Registro não encontrado no DB (ID). Atualize a página e tente novamente.")
                         st.stop()
 
-                    old_nome = df_full.loc[mask, "Nome"].iloc[0]
-                    df_full.loc[mask, "Nome"] = new_nome
-                    df_full.loc[mask, "Detalhes"] = new_detalhes
+                    # exige que tanto ID quanto Nome atual correspondam ao registro antes de permitir alterações
+                    mask_both = mask_id & (df_full["Nome"].astype(str).str.strip() == str(row["Nome"]).strip())
+                    if not mask_both.any():
+                        st.error("ID e Nome não correspondem ao registro atual. Ação cancelada.")
+                        st.stop()
+
+                    old_nome = df_full.loc[mask_both, "Nome"].iloc[0]
+                    df_full.loc[mask_both, "Nome"] = new_nome
+                    df_full.loc[mask_both, "Detalhes"] = new_detalhes
                     save_data(df_full)
 
-                    # atualizar histórico por BancoID quando disponível
+                    # atualizar histórico por BancoID quando disponível (somente onde BancoID e Nome correspondem)
                     hist_full = load_history()
                     if "BancoID" in hist_full.columns:
-                        hist_full.loc[hist_full["BancoID"].astype(str) == str(row["ID"]), "Nome"] = new_nome
+                        hist_full.loc[(hist_full["BancoID"].astype(str) == str(row["ID"])) & (hist_full["Nome"].astype(str).str.strip() == str(old_nome).strip()), "Nome"] = new_nome
                     else:
                         # fallback: onde Nome+Tipo bate
                         hist_full.loc[(hist_full["Nome"] == old_nome) & (hist_full["Tipo"] == row["Tipo"]), "Nome"] = new_nome
@@ -170,42 +176,48 @@ with tab3:
                     st.rerun()
 
                 # --- Remover ---
-
-                    # --- Modal ---
-                    ##################
-                @st.dialog("Tem certeza ?")
-                def check_delete():
-                    rec_id = int(row["ID"])
-                    # recarrega histórico
-                    hist_full = load_history()
-                    # contar transações associadas por BancoID (se houver)
-                    if "BancoID" in hist_full.columns:
-                        n_transacoes = int((hist_full["BancoID"].astype(str) == str(rec_id)).sum())
-                    else:
-                        # fallback por Nome+Tipo
-                        n_transacoes = int(((hist_full["Nome"].astype(str).str.strip() == str(row["Nome"]).strip()) & (hist_full["Tipo"] == row["Tipo"])).sum())
-
-                    st.warning(f"Esta ação removerá **{row['Nome']}** e {n_transacoes} transações associadas.")
-
-                    confirmar = st.button(f"Remover")
-
-                    if confirmar:
-                        # remove do DB por ID
-                        df_full = load_data()
-                        df_new = df_full[df_full["ID"].astype(int) != rec_id].reset_index(drop=True)
-                        save_data(df_new)
-
-                        # remove do histórico por BancoID (preferível)
+                # Modal: usamos uma factory para capturar o `row` atual (evita captura tardia da variável loop)
+                def make_delete_dialog(row):
+                    @st.dialog("Tem certeza ?")
+                    def check_delete(row=row):
+                        rec_id = int(row["ID"])
+                        # recarrega histórico
+                        hist_full = load_history()
+                        # contar transações associadas por BancoID (se houver) *e* Nome correspondente
                         if "BancoID" in hist_full.columns:
-                            hist_new = hist_full[hist_full["BancoID"].astype(str) != str(rec_id)].reset_index(drop=True)
+                            n_transacoes = int(((hist_full["BancoID"].astype(str) == str(rec_id)) & (hist_full["Nome"].astype(str).str.strip() == str(row["Nome"]).strip())).sum())
                         else:
-                            hist_new = hist_full[~((hist_full["Nome"].astype(str).str.strip() == str(row["Nome"]).strip()) & (hist_full["Tipo"] == row["Tipo"]))].reset_index(drop=True)
+                            # fallback por Nome+Tipo
+                            n_transacoes = int(((hist_full["Nome"].astype(str).str.strip() == str(row["Nome"]).strip()) & (hist_full["Tipo"] == row["Tipo"])).sum())
 
-                        hist_new.to_csv(HIST_PATH, index=False)
+                        st.warning(f"Esta ação removerá **{row['Nome']}** e {n_transacoes} transações associadas.")
 
-                        st.success(f"{row['Nome']} removido com sucesso. ({n_transacoes} transações excluídas)")
-                        st.rerun()
-                    ##################
+                        confirmar = st.button(f"Remover")
+
+                        if confirmar:
+                            # remove do DB por ID E Nome (exige correspondência em ambas)
+                            df_full = load_data()
+                            mask_main = (df_full["ID"].astype(int) == rec_id) & (df_full["Nome"].astype(str).str.strip() == str(row["Nome"]).strip())
+                            if not mask_main.any():
+                                st.error("Registro no DB não corresponde ao ID e Nome esperados. Ação cancelada.")
+                                st.stop()
+
+                            df_new = df_full[~mask_main].reset_index(drop=True)
+                            save_data(df_new)
+
+                            # remove do histórico por BancoID (preferível), exigindo também Nome correspondente
+                            if "BancoID" in hist_full.columns:
+                                hist_new = hist_full[~((hist_full["BancoID"].astype(str) == str(rec_id)) & (hist_full["Nome"].astype(str).str.strip() == str(row["Nome"]).strip()))].reset_index(drop=True)
+                            else:
+                                hist_new = hist_full[~((hist_full["Nome"].astype(str).str.strip() == str(row["Nome"]).strip()) & (hist_full["Tipo"] == row["Tipo"]))].reset_index(drop=True)
+
+                            hist_new.to_csv(HIST_PATH, index=False)
+
+                            st.success(f"{row['Nome']} removido com sucesso. ({n_transacoes} transações excluídas)")
+                            st.rerun()
+
+                    return check_delete
 
                 if c3.button("🗑️ Remover", key=f"excluir_{row['ID']}"):
-                    check_delete()
+                    # cria o diálogo específico para este `row` e o executa
+                    make_delete_dialog(row)()
