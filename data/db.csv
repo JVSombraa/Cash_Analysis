@@ -1,0 +1,7 @@
+ID,Tipo,Nome,Saldo,Detalhes
+1,Banco,Mercado Pago,264.0,
+2,Banco,Caixa,225.0,Banco para reservar poupança
+3,Investimento,Caixinha CDI,1475.0,Rende CDI de 110%
+4,Banco,Nubank,99.0,teste 2
+5,Banco,rawn,17.0,
+6,Banco,teste de remover banco,895.0,

@@ -1,0 +1,5 @@
+ID,BancoID,Tipo,Nome,Data,Operação,Valor,Categoria,Descrição
+6,5,Banco,rawn,2025-11-02 00:00:00,Depósito,7.0,Rendimento,
+7,6,Banco,teste de remover banco,2025-11-02 00:00:00,Depósito,7845.0,Transferência recebida,teste
+8,6,Banco,teste de remover banco,2025-11-08 00:00:00,Retirada,7000.0,Saúde,teste
+11,3,Investimento,Caixinha CDI,2025-11-01 00:00:00,Depósito,25.0,Rendimento,veremos
