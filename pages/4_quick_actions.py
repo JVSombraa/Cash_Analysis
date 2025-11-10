@@ -444,7 +444,7 @@ with tab_future:
                     "BancoID": int(item_fut["ID"]),
                     "Tipo": tipo_fut,
                     "Nome": nome_fut,
-                    "Data": pd.Timestamp(data_fut).strftime("%Y-%m-%d 00:00:00"),
+                    "Data": pd.Timestamp(data_fut).strftime("%Y-%m-%d"),
                     "Operação": "Depósito" if operacao_fut.startswith("Depósito") else "Retirada",
                     "Valor": float(valor_fut),
                     "Categoria": "" if categoria_fut == "Nenhuma" else categoria_fut,
@@ -473,7 +473,6 @@ with tab_future:
             with st.expander(sched_name):
 
                 aa_c1, aa_c2 = st.columns(2)
-
                 aa_c1.write(f"**Conta:** {sched['Nome']}")
                 aa_c2.write(f"**Tipo:** {sched['Tipo']}")
                 aa_c1.write(f"**Descrição:** {sched.get('Descrição','—')}")
@@ -482,6 +481,8 @@ with tab_future:
                 rec_readable = {"none":"Nenhuma", "weekly":"Semanal", "biweekly":"Quinzenal", "monthly":"Mensal"}.get(rec_display, "Nenhuma")
                 aa_c1.write(f"**Recorrência:** {rec_readable}")
                 aa_c2.write(f"**Duração (meses):** {int(sched.get('Duracao_meses') or 0)}")
+
+                st.divider()
 
                 # Calcula instâncias a partir do agendamento
                 occs_all = generate_occurrences(
@@ -497,7 +498,7 @@ with tab_future:
                 ]
 
                 if not occs:
-                    st.info("Nenhuma instância futura válida (talvez a data inicial esteja no passado).")
+                    st.success("Todas as transações foram realizadas.")
                 else:
                     for d in occs:
                         d_str = pd.to_datetime(d).strftime("%d/%m/%Y")
@@ -509,7 +510,8 @@ with tab_future:
                             df_full = load_data()
                             hist_full = pd.read_csv(HIST_PATH) if HIST_PATH.exists() else pd.DataFrame(columns=["ID","BancoID","Tipo","Nome","Data","Operação","Valor","Categoria","Descrição"])
 
-                            mask_bank = df_full["ID"].astype(int) == int(sched["BancoID"])
+                            mask_bank = (df_full["ID"].astype(int) == int(sched["BancoID"])) & (df_full["Nome"] == sched["Nome"])
+
                             if not mask_bank.any():
                                 st.error("Conta não encontrada (ID). Atualize a página.")
                                 st.stop()
@@ -537,13 +539,16 @@ with tab_future:
                                 hist_full = pd.concat([hist_full, pd.DataFrame([hist_entry])], ignore_index=True)
                                 hist_full.to_csv(HIST_PATH, index=False)
 
+                                exclusion_key = f"{sched_id}_{pd.to_datetime(d).strftime('%Y-%m-%d')}"
+                                future_exclusions.add(exclusion_key)
+                                save_future_exclusions(future_exclusions)
+
                                 st.success(f"Transação realizada para {d_str} (salvo no histórico).")
                                 st.rerun()
 
                         if cols[2].button("🗑️ Remover instância", key=f"reminst_{sched_id}_{d_str}"):
                             exclusion_key = f"{sched_id}_{pd.to_datetime(d).strftime('%Y-%m-%d')}"
 
-                            # Adiciona ao conjunto de exclusões
                             future_exclusions.add(exclusion_key)
                             save_future_exclusions(future_exclusions)
 
@@ -553,13 +558,13 @@ with tab_future:
                 st.markdown("---")
 
                 col_a, col_b = st.columns([1,1])
-                if col_a.button("✔️ Realizar todas as instâncias futuras", key=f"exec_all_{sched_id}"):
+                if col_a.button("✔️ Realizar todas as movimentações futuras", key=f"exec_all_{sched_id}"):
                     df_full = load_data()
                     hist_full = pd.read_csv(HIST_PATH) if HIST_PATH.exists() else pd.DataFrame(columns=["ID","BancoID","Tipo","Nome","Data","Operação","Valor","Categoria","Descrição"])
                     executed = 0
                     skipped = 0
                     for d in occs:
-                        mask_bank = df_full["ID"].astype(int) == int(sched["BancoID"])
+                        mask_bank = (df_full["ID"].astype(int) == int(sched["BancoID"])) & (df_full["Nome"] == sched["Nome"])
                         current_balance_fut = float(df_full.loc[mask_bank, "Saldo"].iloc[0])
                         new_effect_fut = float(sched["Valor"]) if sched["Operação"] == "Depósito" else -float(sched["Valor"])
                         new_balance_fut = current_balance_fut + new_effect_fut
@@ -582,6 +587,10 @@ with tab_future:
                         hist_full = pd.concat([hist_full, pd.DataFrame([hist_entry])], ignore_index=True)
                         executed += 1
 
+                        exclusion_key = f"{sched_id}_{pd.to_datetime(d).strftime('%Y-%m-%d')}"
+                        future_exclusions.add(exclusion_key)
+
+
                     save_data(df_full)
                     hist_full.to_csv(HIST_PATH, index=False)
                     st.success(f"Executadas {executed} instâncias. {skipped} foram puladas por saldo insuficiente.")
@@ -594,14 +603,29 @@ with tab_future:
                         st.rerun()
 
     st.markdown("---")
-    if st.button("🧹 Limpar agendamentos com todas instâncias no passado"):
+    if st.button("🧹 Limpar agendamentos concluídos"):
         future_df = load_future()
+        future_exclusions = load_future_exclusions()
+
         keep = []
+        removed = 0
+
         for _, s in future_df.iterrows():
-            occ = generate_occurrences(s["Data"], s.get("Recorrencia","none"), int(s.get("Duracao_meses") or 0))
-            if any([d >= pd.Timestamp(date.today()) for d in occ]):
+            sched_id = int(s["ID"])
+            rec = s.get("Recorrencia", "none")
+            dur = int(s.get("Duracao_meses") or 0)
+            occs = generate_occurrences(s["Data"], rec, dur)
+
+            exclusion_keys = {f"{sched_id}_{pd.to_datetime(d).strftime('%Y-%m-%d')}" for d in occs}
+            all_done = all(k in future_exclusions for k in exclusion_keys)
+
+            if not all_done:
                 keep.append(s)
+            else:
+                removed += 1
+
         newf = pd.DataFrame(keep)
         save_future(newf)
-        st.success("Limpeza concluída.")
+
+        st.success(f"Limpeza concluída. {removed} agendamento(s) concluído(s) foram removidos.")
         st.rerun()

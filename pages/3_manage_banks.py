@@ -2,6 +2,7 @@ import streamlit as st
 from pathlib import Path
 import pandas as pd
 from data.db import load_data, save_data, add_entry, update_balance
+import json
 
 # --- CONFIGURAÇÃO INICIAL ---
 st.set_page_config(layout="wide")
@@ -13,6 +14,9 @@ st.markdown(
 
 # --- CAMINHOS DE ARQUIVOS ---
 HIST_PATH = Path(__file__).resolve().parent.parent / "data" / "history.csv"
+FUTURE_PATH = Path(__file__).resolve().parent.parent / "data" / "future_transactions.csv"
+EXCLUSIONS_PATH = Path(__file__).resolve().parent.parent / "data" / "future_exclusions.json"
+
 
 # --- FUNÇÕES AUXILIARES ---
 def load_history():
@@ -29,6 +33,27 @@ def load_history():
     cols_pref = ["ID", "BancoID", "Tipo", "Nome", "Data", "Operação", "Valor", "Categoria", "Descrição"]
     h = h[[c for c in cols_pref if c in h.columns] + [c for c in h.columns if c not in cols_pref]]
     return h
+
+def load_future():
+    """Carrega o arquivo de agendamentos futuros."""
+    if FUTURE_PATH.exists():
+        return pd.read_csv(FUTURE_PATH)
+    return pd.DataFrame(columns=["ID","BancoID","Tipo","Nome","Data","Operação","Valor","Categoria","Descrição","Recorrencia","Duracao_meses"])
+
+def save_future(df):
+    """Salva o DataFrame de agendamentos futuros."""
+    df.to_csv(FUTURE_PATH, index=False)
+
+
+def load_future_exclusions():
+    """Carrega IDs excluídos (opcional, usado apenas se precisar)."""
+    if EXCLUSIONS_PATH.exists():
+        return set(json.loads(EXCLUSIONS_PATH.read_text()))
+    return set()
+
+def save_future_exclusions(exclusions):
+    """Salva exclusões de instâncias futuras."""
+    EXCLUSIONS_PATH.write_text(json.dumps(list(exclusions)))
 
 # --- CARREGA DADOS PRINCIPAIS ---
 df = load_data()
@@ -56,10 +81,11 @@ tab1, tab2, tab3 = st.tabs(
 with tab1:
     nome_banco = st.text_input("🏦 Nome do Banco")
     saldo_banco = st.number_input("💰 Saldo inicial (R$)", min_value=0.0, step=100.0)
+    detalhes_banco = st.text_area("🧾 Descrição do banco (opcional)")
 
     if st.button("💾 Salvar Banco"):
         if nome_banco:
-            result = add_entry("Banco", nome_banco, saldo_banco)
+            result = add_entry("Banco", nome_banco, saldo_banco, detalhes_banco)
             if result["duplicado"]:
                 st.warning(f"O banco **{nome_banco}** já existe.")
                 if st.button("➕ Adicionar valor ao saldo existente"):
@@ -83,11 +109,11 @@ with tab1:
 with tab2:
     nome_inv = st.text_input("📈 Nome do Investimento")
     valor_inv = st.number_input("💵 Valor aplicado (R$)", min_value=0.0, step=100.0)
-    detalhes = st.text_area("🧾 Detalhes do investimento (ex: 106% CDI, prazo, etc.)")
+    detalhes_inv = st.text_area("🧾 Detalhes do investimento (ex: 106% CDI, prazo, etc.)")
 
     if st.button("💾 Salvar Investimento"):
         if nome_inv:
-            add_entry("Investimento", nome_inv, valor_inv, detalhes)
+            add_entry("Investimento", nome_inv, valor_inv, detalhes_inv)
             st.success(f"Investimento '{nome_inv}' cadastrado com sucesso!")
             st.rerun()
         else:
@@ -172,6 +198,15 @@ with tab3:
                         hist_full.loc[(hist_full["Nome"] == old_nome) & (hist_full["Tipo"] == row["Tipo"]), "Nome"] = new_nome
 
                     hist_full.to_csv(HIST_PATH, index=False)
+
+                    # === Atualiza também o nome no arquivo de agendamentos futuros ===
+                    future_df = load_future()
+                    if not future_df.empty and "BancoID" in future_df.columns:
+                        mask_future = future_df["BancoID"].astype(str) == str(row["ID"])
+                        future_df.loc[mask_future, "Nome"] = new_nome
+                        save_future(future_df)
+
+
                     st.success(f"{old_nome} atualizado para {new_nome}.")
                     st.rerun()
 
@@ -211,6 +246,14 @@ with tab3:
                             else:
                                 hist_new = hist_full[~((hist_full["Nome"].astype(str).str.strip() == str(row["Nome"]).strip()) & (hist_full["Tipo"] == row["Tipo"]))].reset_index(drop=True)
 
+                            # === Remove também agendamentos futuros associados ===
+                            future_df = load_future()
+                            if not future_df.empty and "BancoID" in future_df.columns:
+                                future_new = future_df[future_df["BancoID"].astype(str) != str(rec_id)].reset_index(drop=True)
+                                removed_future = len(future_df) - len(future_new)
+                                if removed_future > 0:
+                                    save_future(future_new)
+                            
                             hist_new.to_csv(HIST_PATH, index=False)
 
                             st.success(f"{row['Nome']} removido com sucesso. ({n_transacoes} transações excluídas)")

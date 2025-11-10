@@ -1,5 +1,6 @@
 ID,Tipo,Nome,Saldo,Detalhes
 1,Banco,Mercado Pago,1312.0,
-2,Banco,Caixa,463.0,Banco para reservar poupança
+2,Banco,Caixa,684.0,Banco para reservar poupança
 3,Investimento,Caixinha CDI,1475.0,Rende CDI de 110%
-5,Banco,aaaaa,239.0,
+4,Banco, Banco teste,100.0,teste de bancop
+5,Investimento,inv,13.0,investieeee

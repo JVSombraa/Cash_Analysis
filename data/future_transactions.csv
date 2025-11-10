@@ -1,4 +1,2 @@
 ID,BancoID,Tipo,Nome,Data,Operação,Valor,Categoria,Descrição,Recorrencia,Duracao_meses
-1,2,Banco,Caixa,2025-11-10 00:00:00,Depósito,110.0,Transferência recebida,internet,monthly,3
-2,5,Banco,aaaaa,2025-11-11 00:00:00,Depósito,50.0,Rendimento,teste,weekly,4
-3,5,Banco,aaaaa,2025-11-11 00:00:00,Depósito,10.0,Salário,,weekly,3
+4,1,Banco,Mercado Pago,2025-11-11,Depósito,1.0,Transferência recebida,teste,weekly,1
