@@ -6,8 +6,6 @@ import json
 
 # --- CONFIGURAÇÃO INICIAL ---
 st.set_page_config(layout="wide")
-if "trigger_rerun" not in st.session_state:
-    st.session_state["trigger_rerun"] = False
 
 st.title("🏦 Gerenciar Bancos e Investimentos")
 
@@ -19,6 +17,10 @@ st.markdown(
 HIST_PATH = Path(__file__).resolve().parent.parent / "data" / "history.csv"
 FUTURE_PATH = Path(__file__).resolve().parent.parent / "data" / "future_transactions.csv"
 EXCLUSIONS_PATH = Path(__file__).resolve().parent.parent / "data" / "future_exclusions.json"
+
+
+if "trigger_rerun" not in st.session_state:
+    st.session_state["trigger_rerun"] = False
 
 
 # --- FUNÇÕES AUXILIARES ---
