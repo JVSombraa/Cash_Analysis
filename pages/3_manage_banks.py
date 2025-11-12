@@ -6,6 +6,9 @@ import json
 
 # --- CONFIGURAÇÃO INICIAL ---
 st.set_page_config(layout="wide")
+if "trigger_rerun" not in st.session_state:
+    st.session_state["trigger_rerun"] = False
+
 st.title("🏦 Gerenciar Bancos e Investimentos")
 
 st.markdown(
@@ -91,10 +94,15 @@ with tab1:
                 if st.button("➕ Adicionar valor ao saldo existente"):
                     update_balance(nome_banco, "Banco", saldo_banco)
                     st.success(f"Saldo atualizado para o banco '{nome_banco}'.")
+                    # st.rerun()
+                    st.session_state["trigger_rerun"] = True
                     st.rerun()
             else:
                 st.success(f"Banco '{nome_banco}' cadastrado com sucesso!")
+                # st.rerun()
+                st.session_state["trigger_rerun"] = True
                 st.rerun()
+
         else:
             st.warning("Informe o nome do banco.")
 
@@ -115,6 +123,8 @@ with tab2:
         if nome_inv:
             add_entry("Investimento", nome_inv, valor_inv, detalhes_inv)
             st.success(f"Investimento '{nome_inv}' cadastrado com sucesso!")
+            # st.rerun()
+            st.session_state["trigger_rerun"] = True
             st.rerun()
         else:
             st.warning("Informe o nome do investimento.")
@@ -208,6 +218,8 @@ with tab3:
 
 
                     st.success(f"{old_nome} atualizado para {new_nome}.")
+                    # st.rerun()
+                    st.session_state["trigger_rerun"] = True
                     st.rerun()
 
                 # --- Remover ---
@@ -257,6 +269,8 @@ with tab3:
                             hist_new.to_csv(HIST_PATH, index=False)
 
                             st.success(f"{row['Nome']} removido com sucesso. ({n_transacoes} transações excluídas)")
+                            # st.rerun()
+                            st.session_state["trigger_rerun"] = True
                             st.rerun()
 
                     return check_delete
