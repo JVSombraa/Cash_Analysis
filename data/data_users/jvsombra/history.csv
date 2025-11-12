@@ -1,0 +1,5 @@
+ID,BancoID,Tipo,Nome,Data,Operação,Valor,Categoria,Descrição
+1,1,Banco,teste de banco,2025-11-10 00:00:00,Depósito,2.0,Salário,
+3,1,Banco,teste de banco,2025-11-11 00:00:00,Depósito,10.0,Transferência recebida,
+4,1,Banco,teste de banco,2025-12-09 00:00:00,Depósito,10.0,Transferência recebida,
+5,1,Banco,teste de banco,2025-11-11 00:00:00,Retirada,16.5,Alimentação,

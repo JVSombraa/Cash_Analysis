@@ -1,0 +1,2 @@
+ID,BancoID,Tipo,Nome,Data,Operação,Valor,Categoria,Descrição,Recorrencia,Duracao_meses
+1,1,Banco,teste de banco,2025-11-11,Depósito,10.0,Transferência recebida,,biweekly,2

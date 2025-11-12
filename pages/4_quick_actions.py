@@ -10,17 +10,23 @@ from pathlib import Path
 # -----------------------------
 # Load files
 # -----------------------------
-HIST_PATH = Path(__file__).resolve().parent.parent / "data" / "history.csv"
+
+user = st.session_state.get("user", "default")
+
+DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "data_users" / user
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+HIST_PATH = DATA_DIR / "history.csv"
 HIST_PATH.parent.mkdir(exist_ok=True)
 
-FUTURE_TRANS_PATH = Path(__file__).resolve().parent.parent / "data" / "future_transactions.csv"
+FUTURE_TRANS_PATH = DATA_DIR / "future_transactions.csv"
 if not FUTURE_TRANS_PATH.exists():
     pd.DataFrame(columns=[
         "ID", "BancoID", "Tipo", "Nome", "Data", "Operação", "Valor",
         "Categoria", "Descrição", "Recorrencia", "Duracao_meses"
     ]).to_csv(FUTURE_TRANS_PATH, index=False)
 
-EXCLUSIONS_FILE = Path("data/future_exclusions.json")
+EXCLUSIONS_FILE = DATA_DIR / "future_exclusions.json"
 
 # -----------------------------
 # Defs

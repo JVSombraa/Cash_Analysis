@@ -6,7 +6,12 @@ from pathlib import Path
 from datetime import date
 import calendar
 
-FUTURE_PATH = Path(__file__).resolve().parent.parent / "data" / "future_transactions.csv"
+user = st.session_state.get("user", "default")
+
+DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "data_users" / user
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+FUTURE_PATH = DATA_DIR / "future_transactions.csv"
 
 def generate_occurrences(start_date, recurr: str, dur_months: int):
     start = pd.to_datetime(start_date).normalize()
