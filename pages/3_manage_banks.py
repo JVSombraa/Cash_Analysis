@@ -19,8 +19,8 @@ FUTURE_PATH = Path(__file__).resolve().parent.parent / "data" / "future_transact
 EXCLUSIONS_PATH = Path(__file__).resolve().parent.parent / "data" / "future_exclusions.json"
 
 
-if "trigger_rerun" not in st.session_state:
-    st.session_state["trigger_rerun"] = False
+if "pending_action" not in st.session_state:
+    st.session_state["pending_action"] = None
 
 
 # --- FUNÇÕES AUXILIARES ---
@@ -97,13 +97,11 @@ with tab1:
                     update_balance(nome_banco, "Banco", saldo_banco)
                     st.success(f"Saldo atualizado para o banco '{nome_banco}'.")
                     # st.rerun()
-                    st.session_state["trigger_rerun"] = True
-                    st.rerun()
+                    st.session_state["pending_action"] = "reload"
             else:
                 st.success(f"Banco '{nome_banco}' cadastrado com sucesso!")
                 # st.rerun()
-                st.session_state["trigger_rerun"] = True
-                st.rerun()
+                st.session_state["pending_action"] = "reload"
 
         else:
             st.warning("Informe o nome do banco.")
@@ -126,8 +124,7 @@ with tab2:
             add_entry("Investimento", nome_inv, valor_inv, detalhes_inv)
             st.success(f"Investimento '{nome_inv}' cadastrado com sucesso!")
             # st.rerun()
-            st.session_state["trigger_rerun"] = True
-            st.rerun()
+            st.session_state["pending_action"] = "reload"
         else:
             st.warning("Informe o nome do investimento.")
 
@@ -221,8 +218,7 @@ with tab3:
 
                     st.success(f"{old_nome} atualizado para {new_nome}.")
                     # st.rerun()
-                    st.session_state["trigger_rerun"] = True
-                    st.rerun()
+                    st.session_state["pending_action"] = "reload"
 
                 # --- Remover ---
                 # Modal: usamos uma factory para capturar o `row` atual (evita captura tardia da variável loop)
@@ -272,11 +268,15 @@ with tab3:
 
                             st.success(f"{row['Nome']} removido com sucesso. ({n_transacoes} transações excluídas)")
                             # st.rerun()
-                            st.session_state["trigger_rerun"] = True
-                            st.rerun()
+                            st.session_state["pending_action"] = "reload"
 
                     return check_delete
 
                 if c3.button("🗑️ Remover", key=f"excluir_{row['ID']}"):
                     # cria o diálogo específico para este `row` e o executa
                     make_delete_dialog(row)()
+
+# --- APLICA RECARREGAMENTO SE NECESSÁRIO ---
+if st.session_state.get("pending_action") == "reload":
+    st.session_state["pending_action"] = None
+    st.rerun()
