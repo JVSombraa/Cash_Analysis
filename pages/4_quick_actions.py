@@ -207,7 +207,7 @@ with tab_reg:
         st.info("Nenhuma movimentação registrada ainda.")
     else:
         recent["Data"] = pd.to_datetime(recent["Data"], errors="coerce").dt.strftime("%d/%m/%Y")
-        st.dataframe(recent[["Data", "Operação", "Nome", "Tipo", "Valor", "Categoria", "Descrição"]], use_container_width=True)
+        st.dataframe(recent[["Data", "Operação", "Nome", "Tipo", "Valor", "Categoria", "Descrição"]], width='stretch')
 
 # -----------------------------
 # Aba Editar / Remover
@@ -382,7 +382,7 @@ with tab_vis:
                 fig_line = px.line(cum.melt(id_vars="Data", value_vars=[c for c in ["Banco","Investimento"] if c in cum.columns], var_name="Tipo", value_name="Saldo acumulado"),
                                    x="Data", y="Saldo acumulado", color="Tipo", title="Evolução do saldo acumulado")
                 fig_line.update_layout(hovermode="x unified", template="simple_white", height=360)
-                st.plotly_chart(fig_line, use_container_width=True)
+                st.plotly_chart(fig_line, width='stretch')
 
             
             graph1, graph2 = st.columns([1,1])
@@ -394,20 +394,20 @@ with tab_vis:
                 monthly = monthly.sort_values("Mes")
                 fig_bar = px.bar(monthly, x="Mes", y=[c for c in monthly.columns if c!="Mes"], barmode="group", title="Fluxo mensal (Entradas vs Saídas)")
                 fig_bar.update_layout(xaxis_title="Mês", yaxis_title="Valor (R$)", template="simple_white", height=360)
-                graph1.plotly_chart(fig_bar, use_container_width=True)
+                graph1.plotly_chart(fig_bar, width='stretch')
 
             # Distribution by category
             gastos = gdf[gdf["Operação"] == "Retirada"]
             if not gastos.empty:
                 fig_pie = px.pie(gastos, names="Categoria", values="Valor", hole=0.4, title="Distribuição de gastos por categoria")
                 fig_pie.update_traces(textinfo="label+percent")
-                graph2.plotly_chart(fig_pie, use_container_width=True)
+                graph2.plotly_chart(fig_pie, width='stretch')
 
             # Detailed table
             st.markdown("### 📋 Tabela detalhada")
             table = gdf.copy()
             table["Data"] = table["Data"].dt.strftime("%d/%m/%Y")
-            st.dataframe(table[["Data","Operação","Nome","Tipo","Valor","Categoria","Descrição"]].sort_values("Data", ascending=False), use_container_width=True)
+            st.dataframe(table[["Data","Operação","Nome","Tipo","Valor","Categoria","Descrição"]].sort_values("Data", ascending=False), width='stretch')
 
 # -----------------------------
 # Aba Transações Futuras

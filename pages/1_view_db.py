@@ -131,7 +131,7 @@ if FUTURE_PATH.exists():
 
             st.dataframe(
                 tabela,
-                use_container_width=True,
+                width='stretch',
                 hide_index=True
             )
         else:
@@ -149,15 +149,15 @@ df_inv = df[df["Tipo"] == "Investimento"]
 
 with col1:
     st.subheader("🏦 Bancos")
-    st.dataframe(df_bancos, use_container_width=True)
+    st.dataframe(df_bancos, width='stretch')
     if not df_bancos.empty:
         fig_b = px.bar(df_bancos, x="Nome", y="Saldo", title="Saldo por Banco", text_auto=True, color="Nome")
         fig_b.update_layout(xaxis_title="", yaxis_title="R$", showlegend=False)
-        st.plotly_chart(fig_b, use_container_width=True)
+        st.plotly_chart(fig_b, width='stretch')
 
 with col2:
     st.subheader("💰 Investimentos")
-    st.dataframe(df_inv, use_container_width=True)
+    st.dataframe(df_inv, width='stretch')
     if not df_inv.empty:
         fig_i = px.pie(df_inv, names="Nome", values="Saldo", title="Distribuição dos Investimentos", hole=0.4)
-        st.plotly_chart(fig_i, use_container_width=True)
+        st.plotly_chart(fig_i, width='stretch')

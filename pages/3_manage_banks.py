@@ -13,10 +13,15 @@ st.markdown(
     "Adicione, visualize e gerencie seus **bancos** e **investimentos** registrados no sistema."
 )
 
-# --- CAMINHOS DE ARQUIVOS ---
-HIST_PATH = Path(__file__).resolve().parent.parent / "data" / "history.csv"
-FUTURE_PATH = Path(__file__).resolve().parent.parent / "data" / "future_transactions.csv"
-EXCLUSIONS_PATH = Path(__file__).resolve().parent.parent / "data" / "future_exclusions.json"
+# --- CAMINHOS DE ARQUIVOS POR USUÁRIO ---
+user = st.session_state.get("user", "default")
+
+DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "data_users" / user
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+HIST_PATH = DATA_DIR / "history.csv"
+FUTURE_PATH = DATA_DIR / "future_transactions.csv"
+EXCLUSIONS_PATH = DATA_DIR / "future_exclusions.json"
 
 
 if "pending_action" not in st.session_state:
@@ -109,7 +114,7 @@ with tab1:
     st.markdown("---")
     st.subheader("📋 Bancos cadastrados")
     bancos_df = df[df["Tipo"] == "Banco"]
-    st.dataframe(bancos_df, use_container_width=True)
+    st.dataframe(bancos_df, width='stretch')
 
 # ================================================
 # ========== ABA 2 — CADASTRAR INVESTIMENTO ======
@@ -131,7 +136,7 @@ with tab2:
     st.markdown("---")
     st.subheader("📋 Investimentos cadastrados")
     inv_df = df[df["Tipo"] == "Investimento"]
-    st.dataframe(inv_df, use_container_width=True)
+    st.dataframe(inv_df, width='stretch')
 
 # ========================================
 # ========== ABA 3 — GERENCIAMENTO =======

@@ -45,4 +45,4 @@ if st.button("Calcular Simulação"):
         name="Evolução"
     ))
     fig.update_layout(title="📈 Crescimento do Investimento", xaxis_title="Mês", yaxis_title="Valor (R$)")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
